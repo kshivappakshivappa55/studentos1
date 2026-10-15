@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudentOS - AI-Powered Student Productivity & Academic Operating System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(226, 232, 240, 0.8); }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.25); } 50% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.45); } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex selection:bg-indigo-500 selection:text-white">
+
+  <!-- APP ROOT CONTAINER -->
+  <div id="app" class="flex-1 flex min-h-screen">
+    
+    <!-- MOBILE BACKDROP -->
+    <div id="mobileBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs hidden lg:hidden"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen transition-all duration-300 ease-in-out flex flex-col justify-between bg-[#131135] text-slate-200 border-r border-indigo-950/80 shadow-2xl w-64 -translate-x-full lg:translate-x-0">
+      <div>
+        <!-- Brand Header -->
+        <div class="flex items-center justify-between p-4 border-b border-indigo-900/40">
+          <div class="flex items-center gap-3 overflow-hidden cursor-pointer" onclick="switchTab('dashboard')">
+            <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-lg shadow-indigo-600/30 flex-shrink-0">
+              <i data-lucide="sparkles" class="w-5 h-5"></i>
+            </div>
+            <div id="brandText" class="truncate">
+              <div class="font-bold text-lg text-white tracking-tight flex items-center gap-1">
+                Student<span class="text-cyan-400">OS</span>
+              </div>
+              <div class="text-[10px] text-indigo-300 font-medium tracking-wider uppercase">
+                AI Academic Hub
+              </div>
+            </div>
+          </div>
+          <button onclick="toggleCollapseSidebar()" class="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-900/60 text-indigo-300 hover:text-white hover:bg-indigo-800 transition-colors">
+            <i data-lucide="chevron-left" id="collapseIcon" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-170px)]" id="navContainer">
+          <!-- Rendered via JS -->
+        </nav>
+      </div>
+
+      <!-- Student Profile Card Bottom -->
+      <div class="p-3 border-t border-indigo-900/40">
+        <div onclick="switchTab('settings')" class="flex items-center gap-3 p-2 rounded-xl bg-indigo-900/30 hover:bg-indigo-900/60 cursor-pointer transition-colors border border-indigo-800/30">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow">
+            AR
+          </div>
+          <div id="sidebarProfileText" class="truncate flex-1">
+            <p class="text-xs font-semibold text-white truncate" id="sidebarProfileName">Alex Rivera</p>
+            <p class="text-[10px] text-indigo-300 truncate" id="sidebarProfileMajor">CS & AI • Sem 5</p>
+          </div>
+          <div class="w-2 h-2 rounded-full bg-emerald-400 ring-4 ring-emerald-500/20" title="Online & Synced"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="flex-1 flex flex-col min-w-0">
+      
+      <!-- NAVBAR -->
+      <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        <div class="flex items-center gap-3 md:gap-4">
+          <button onclick="toggleMobileSidebar()" class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 lg:hidden">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div>
+            <h1 id="pageTitle" class="text-base md:text-lg font-bold text-slate-800 tracking-tight">
+              Good morning, Alex 👋
+            </h1>
+            <p id="pageSubtitle" class="text-[11px] text-slate-500 font-medium hidden sm:block">
+              Fall 2026 • Pacific Institute of Technology • Semester 5
+            </p>
+          </div>
+        </div>
+
+        <!-- Global Search -->
+        <div class="hidden md:flex items-center flex-1 max-w-xs mx-4">
+          <div class="relative w-full">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="globalSearchInput" placeholder="Search tasks, notes, courses..." oninput="handleSearch(this.value)" class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100 hover:bg-slate-200/70 focus:bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 text-slate-800 placeholder-slate-400">
+          </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-center gap-2 md:gap-3">
+          <!-- AI Status Pill -->
+          <div onclick="switchTab('settings')" class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-[11px] font-medium cursor-pointer hover:bg-indigo-100/70 transition-colors" title="AI Engine Active">
+            <i data-lucide="sparkles" class="w-3 h-3 text-indigo-600"></i>
+            <span id="aiStatusPill">Smart Heuristic AI</span>
+          </div>
+
+          <!-- + New Action Dropdown -->
+          <div class="relative">
+            <button onclick="toggleQuickMenu()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium text-xs hover:bg-indigo-700 shadow-sm shadow-indigo-600/20 transition-all active:scale-95">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">New</span>
+            </button>
+            <div id="quickMenu" class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 hidden">
+              <div class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Create</div>
+              <button onclick="openQuickModal('task')" class="w-full px-3 py-2 text-xs text-left text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>New Task / Assignment</span>
+              </button>
+              <button onclick="openQuickModal('session')" class="w-full px-3 py-2 text-xs text-left text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-600"></i>
+                <span>Schedule Study Block</span>
+              </button>
+              <button onclick="switchTab('analyzer'); toggleQuickMenu();" class="w-full px-3 py-2 text-xs text-left text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2">
+                <i data-lucide="file-search" class="w-3.5 h-3.5 text-purple-600"></i>
+                <span>Analyze Syllabus / Doc</span>
+              </button>
+              <button onclick="openQuickModal('attendance')" class="w-full px-3 py-2 text-xs text-left text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2">
+                <i data-lucide="percent" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Log Class Attendance</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Notifications Dropdown -->
+          <div class="relative">
+            <button onclick="toggleNotifMenu()" class="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+              <i data-lucide="bell" class="w-5 h-5"></i>
+              <span id="notifBadge" class="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">3</span>
+            </button>
+            <div id="notifMenu" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 hidden">
+              <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications & Alerts</h3>
+                <button onclick="clearNotifications()" class="text-[11px] font-medium text-slate-500 hover:text-indigo-600">Clear All</button>
+              </div>
+              <div class="max-h-80 overflow-y-auto divide-y divide-slate-100" id="notifList"></div>
+            </div>
+          </div>
+
+          <!-- Avatar -->
+          <button onclick="switchTab('settings')" class="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white font-semibold flex items-center justify-center text-xs shadow-xs">AR</div>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW CONTAINER -->
+      <main class="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto" id="mainView">
+        <!-- Rendered dynamically -->
+      </main>
+    </div>
+  </div>
+
+  <!-- AUTOMATION FLOATING TOAST -->
+  <div id="automationToast" class="fixed bottom-6 right-6 z-50 max-w-md w-full hidden animate-in fade-in slide-in-from-bottom-5">
+    <div id="toastInner" class="p-4 rounded-2xl shadow-2xl border backdrop-blur-md flex items-start gap-3.5 bg-emerald-950/95 border-emerald-600/50 text-emerald-100">
+      <div id="toastIconContainer" class="p-2 rounded-xl bg-white/10 flex-shrink-0 mt-0.5">
+        <i data-lucide="sparkles" class="w-5 h-5 text-emerald-400"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-white">Automation Triggered</span>
+          <span id="toastTime" class="text-[11px] text-white/60">Just now</span>
+        </div>
+        <h4 id="toastTitle" class="text-sm font-bold text-white mt-1 leading-snug">Automation Title</h4>
+        <p id="toastDesc" class="text-xs text-white/80 mt-1 leading-relaxed">Automation description text here.</p>
+      </div>
+      <button onclick="hideToast()" class="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- QUICK MODAL -->
+  <div id="quickModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative">
+      <button onclick="closeQuickModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <div id="quickModalContent"></div>
+    </div>
+  </div>
+
+  <!-- APP JAVASCRIPT & STATE ENGINE -->
+  <script>
+    // --- SAMPLE SEED DATA & STATE ---
+    const initialData = {
+      profile: {
+        name: 'Alex Rivera',
+        email: 'alex.rivera@techuniv.edu',
+        university: 'Pacific Institute of Technology',
+        major: 'Computer Science & Artificial Intelligence',
+        semester: 'Semester 5 (Fall 2026)',
+        monthlyBudget: 1400,
+        defaultAttendanceRequirement: 75,
+        aiProvider: 'smart_builtin'
+      },
+      subjects: [
+        { id: 'cs229', name: 'Machine Learning', code: 'CS 229', credits: 4, targetAttendance: 75, color: '#6366f1' },
+        { id: 'cs161', name: 'Algorithms & Data Structures', code: 'CS 161', credits: 4, targetAttendance: 75, color: '#06b6d4' },
+        { id: 'math53', name: 'Multivariable Calculus', code: 'MATH 53', credits: 3, targetAttendance: 75, color: '#10b981' },
+        { id: 'phys41', name: 'Engineering Physics: Mechanics', code: 'PHYS 41', credits: 4, targetAttendance: 80, color: '#f59e0b' },
+        { id: 'cs110', name: 'Principles of Computer Systems', code: 'CS 110', credits: 4, targetAttendance: 75, color: '#f43f5e' }
+      ],
+      attendance: [
+        { id: 'att-cs229', subjectId: 'cs229', subjectName: 'Machine Learning', subjectCode: 'CS 229', color: '#6366f1', totalClasses: 24, attendedClasses: 21, targetPercentage: 75 },
+        { id: 'att-cs161', subjectId: 'cs161', subjectName: 'Algorithms & Data Structures', subjectCode: 'CS 161', color: '#06b6d4', totalClasses: 25, attendedClasses: 18, targetPercentage: 75 },
+        { id: 'att-math53', subjectId: 'math53', subjectName: 'Multivariable Calculus', subjectCode: 'MATH 53', color: '#10b981', totalClasses: 30, attendedClasses: 26, targetPercentage: 75 },
+        { id: 'att-phys41', subjectId: 'phys41', subjectName: 'Engineering Physics: Mechanics', subjectCode: 'PHYS 41', color: '#f59e0b', totalClasses: 20, attendedClasses: 15, targetPercentage: 80 },
+        { id: 'att-cs110', subjectId: 'cs110', subjectName: 'Principles of Computer Systems', subjectCode: 'CS 110', color: '#f43f5e', totalClasses: 25, attendedClasses: 22, targetPercentage: 75 }
+      ],
+      tasks: [
+        { id: 'task-1', title: 'Implement Dijkstra & Bellman-Ford in C++', description: 'Complete programming assignment 3 with benchmark tests.', courseName: 'Algorithms & Data Structures', courseColor: '#06b6d4', priority: 'urgent', dueDate: '2026-10-16', status: 'in_progress', estimatedMinutes: 180, source: 'ai_extracted' },
+        { id: 'task-2', title: 'Train ResNet-18 on CIFAR-10 Dataset', description: 'Tune learning rate and submit loss curves on Gradescope.', courseName: 'Machine Learning', courseColor: '#6366f1', priority: 'high', dueDate: '2026-10-17', status: 'todo', estimatedMinutes: 120, source: 'manual' },
+        { id: 'task-3', title: 'Multivariable Stokes Theorem Problem Set 6', description: 'Solve questions 4 through 12 on surface integrals and curl.', courseName: 'Multivariable Calculus', courseColor: '#10b981', priority: 'medium', dueDate: '2026-10-18', status: 'todo', estimatedMinutes: 90, source: 'ai_extracted' },
+        { id: 'task-4', title: 'Physics Lab 4 Report: Rotational Dynamics', description: 'Analyze torque data and plot angular acceleration.', courseName: 'Engineering Physics: Mechanics', courseColor: '#f59e0b', priority: 'high', dueDate: '2026-10-14', status: 'todo', estimatedMinutes: 150, source: 'manual' },
+        { id: 'task-5', title: 'Unix Multiprocessing & Pipe IPC Benchmark', description: 'Write fork/exec pipeline with signal handling for Lab 2.', courseName: 'Principles of Computer Systems', courseColor: '#f43f5e', priority: 'medium', dueDate: '2026-10-20', status: 'todo', estimatedMinutes: 140, source: 'ai_extracted' },
+        { id: 'task-6', title: 'Review CS 161 Dynamic Programming Sets', description: 'Knapsack, Matrix Chain Multiplication, and LCS.', courseName: 'Algorithms & Data Structures', courseColor: '#06b6d4', priority: 'urgent', dueDate: '2026-10-15', status: 'completed', estimatedMinutes: 60, source: 'manual' }
+      ],
+      sessions: [
+        { id: 'session-1', title: 'Deep Dive: Gradient Descent & Regularization', subjectName: 'Machine Learning', subjectColor: '#6366f1', date: '2026-10-15', startTime: '10:00', endTime: '11:30', durationMinutes: 90, isCompleted: true, difficulty: 'hard', focusTopic: 'L1/L2 Regularization, Ridge vs Lasso, Cross-Entropy Loss' },
+        { id: 'session-2', title: 'Graph Algorithms Practice: Dijkstra & A*', subjectName: 'Algorithms & Data Structures', subjectColor: '#06b6d4', date: '2026-10-15', startTime: '14:00', endTime: '15:15', durationMinutes: 75, isCompleted: false, difficulty: 'medium', focusTopic: 'Priority queue heaps and relaxation step edge-cases' },
+        { id: 'session-3', title: 'Calculus: Green\'s Theorem Applications', subjectName: 'Multivariable Calculus', subjectColor: '#10b981', date: '2026-10-15', startTime: '16:30', endTime: '17:30', durationMinutes: 60, isCompleted: false, difficulty: 'easy', focusTopic: 'Line integrals over closed curves & flux' },
+        { id: 'session-4', title: 'Missed Session: Physics Inertia Tensors', subjectName: 'Engineering Physics: Mechanics', subjectColor: '#f59e0b', date: '2026-10-14', startTime: '19:00', endTime: '20:30', durationMinutes: 90, isCompleted: false, isMissed: true, difficulty: 'hard', focusTopic: 'Parallel axis theorem & moment of inertia matrix' },
+        { id: 'session-5', title: 'Systems: Virtual Memory & Page Tables', subjectName: 'Principles of Computer Systems', subjectColor: '#f43f5e', date: '2026-10-16', startTime: '11:00', endTime: '12:30', durationMinutes: 90, isCompleted: false, difficulty: 'hard', focusTopic: 'TLB hit/miss latency, multi-level paging calculations' }
+      ],
+      notes: [
+        {
+          id: 'note-1',
+          title: 'Neural Networks: Backpropagation & Optimization',
+          subjectName: 'Machine Learning',
+          subjectColor: '#6366f1',
+          summary: 'Comprehensive breakdown of neural network forward/backward passes, layer error propagation formulas, and adaptive optimizers (Adam, Momentum).',
+          keyTakeaways: [
+            'Chain rule allows error gradients to propagate from loss layer backward to input weights.',
+            'Activation functions must be differentiable (ReLU, GELU, Sigmoid).',
+            'Vanishing gradients occur in deep networks when sigmoid derivative (< 0.25) multiplies repeatedly.',
+            'Adam optimizer combines Momentum and RMSProp with bias correction.'
+          ],
+          formulas: [
+            'z^[l] = W^[l] \\cdot a^[l-1] + b^[l]',
+            '\\delta^[l] = (W^[l+1]^T \\delta^[l+1]) \\odot g\'(z^[l])',
+            '\\theta_t = \\theta_{t-1} - \\frac{\\alpha}{\\sqrt{\\hat{v}_t} + \\epsilon} \\hat{m}_t'
+          ],
+          flashcards: [
+            { id: 'fc-1', question: 'Why does ReLU help alleviate the vanishing gradient problem compared to Sigmoid?', answer: 'ReLU derivative is constant 1 for positive inputs, avoiding gradient shrinkage during repeated chain rule multiplications.' },
+            { id: 'fc-2', question: 'What two methods does the Adam optimizer combine?', answer: 'Momentum (exponential moving average of past gradients) and RMSProp (moving average of squared gradients).' }
+          ]
+        },
+        {
+          id: 'note-2',
+          title: 'Master Theorem for Divide & Conquer Recurrences',
+          subjectName: 'Algorithms & Data Structures',
+          subjectColor: '#06b6d4',
+          summary: 'Quick guide for finding asymptotic complexity of divide-and-conquer recurrences using the three Master Theorem cases.',
+          keyTakeaways: [
+            'Critical comparison exponent is c_crit = log_b(a).',
+            'Case 1: Tree leaves dominate -> Theta(n^log_b(a)).',
+            'Case 2: Levels are balanced -> add a log(n) factor.',
+            'Case 3: Root operation dominates -> Theta(f(n)).'
+          ],
+          formulas: [
+            'T(n) = a T(n/b) + f(n)',
+            'c_{crit} = \\log_b(a)'
+          ],
+          flashcards: [
+            { id: 'fc-21', question: 'What is the recurrence relation for Merge Sort and which case applies?', answer: 'T(n) = 2T(n/2) + O(n). Here a=2, b=2, log_2(2)=1. Case 2 applies giving Theta(n log n).' }
+          ]
+        }
+      ],
+      quizzes: [
+        {
+          id: 'quiz-1',
+          title: 'Machine Learning: Neural Net Optimization Diagnostic',
+          subjectName: 'Machine Learning',
+          difficulty: 'medium',
+          totalQuestions: 3,
+          questions: [
+            { id: 'q-1', question: 'Which optimizer tracks both the first moment (mean) and second raw moment (uncentered variance) of gradients?', options: ['SGD with momentum', 'AdaGrad', 'RMSProp', 'Adam'], correctAnswer: 3, explanation: 'Adam (Adaptive Moment Estimation) tracks exponentially decaying averages of past gradients and squared gradients.', topic: 'Optimization' },
+            { id: 'q-2', question: 'What happens to the gradient of the standard Sigmoid activation function when input z is very large (> 10)?', options: ['It approaches 1.0', 'It approaches 0.0, causing vanishing gradients', 'It oscillates', 'It explodes'], correctAnswer: 1, explanation: 'Sigmoid derivative approaches 0 when z is large, freezing backward weight updates.', topic: 'Activation Functions' },
+            { id: 'q-3', question: 'In L2 Regularization, how does the penalty affect weights during gradient descent update?', options: ['Forces small weights strictly to 0', 'Multiplies weights by (1 - alpha*lambda/m) shrinking them smoothly', 'Doubles learning rate', 'Has no effect'], correctAnswer: 1, explanation: 'L2 regularization smoothly shrinks weight magnitudes without enforcing exact sparsity.', topic: 'Regularization' }
+          ]
+        }
+      ],
+      exams: [
+        {
+          id: 'exam-1',
+          subjectName: 'Algorithms & Data Structures',
+          subjectCode: 'CS 161',
+          date: '2026-10-19',
+          time: '09:00 AM',
+          venue: 'Hewlett Auditorium Hall 200',
+          targetScore: 92,
+          color: '#06b6d4',
+          syllabusTopics: [
+            { id: 'top-1', topic: 'Asymptotic Notation & Master Theorem', completed: true },
+            { id: 'top-2', topic: 'Divide & Conquer: Strassen & FFT', completed: true },
+            { id: 'top-3', topic: 'Dynamic Programming: 1D & 2D Memoization', completed: false },
+            { id: 'top-4', topic: 'Graph Algorithms: Shortest Paths (Dijkstra, Bellman-Ford)', completed: false }
+          ],
+          revisionSchedule: [
+            { dayOffset: 14, label: 'Initial Syllabus Sweep', date: '2026-10-05', completed: true },
+            { dayOffset: 7, label: 'Problem Set & Edge Cases Review', date: '2026-10-12', completed: true },
+            { dayOffset: 3, label: 'Timed Past Exam Practice', date: '2026-10-16', completed: false },
+            { dayOffset: 1, label: 'Cheat Sheet & Formula Polish', date: '2026-10-18', completed: false }
+          ]
+        }
+      ],
+      expenses: [
+        { id: 'exp-1', title: 'Algorithms Textbook: CLRS 4th Ed', amount: 78.50, category: 'books', date: '2026-10-12', note: 'Required reading' },
+        { id: 'exp-2', title: 'Campus Dining Meal Plan Refill', amount: 115.00, category: 'food', date: '2026-10-13', note: 'Dining hall balance' },
+        { id: 'exp-3', title: 'AWS Cloud Credits for ML Model', amount: 32.40, category: 'tuition', date: '2026-10-11', note: 'GPU instances' },
+        { id: 'exp-4', title: 'Monthly Transit Pass', amount: 45.00, category: 'transit', date: '2026-10-09', note: 'Bus & Light rail' }
+      ],
+      automations: [
+        { id: 'auto-1', timestamp: 'Just now', type: 'attendance_warning', title: 'Low Attendance Detected: CS 161', description: 'Algorithms attendance dropped to 72.0% (below 75% college requirement). Advisor: Attend next 3 classes.', status: 'warning' },
+        { id: 'auto-2', timestamp: '2 hours ago', type: 'schedule_reorganized', title: 'Missed Study Session Auto-Reorganized', description: 'Rescheduled 90-min Physics block from yesterday into tomorrow morning 10:30 AM.', status: 'success' },
+        { id: 'auto-3', timestamp: 'Yesterday', type: 'assignment_extracted', title: 'Assignment Analyzed & 4 Tasks Added', description: 'Extracted Dijkstra programming specifications from syllabus with confirmed deadlines.', status: 'success' }
+      ],
+      notifications: [
+        { id: 'notif-1', title: 'Low Attendance Alert: CS 161', message: 'Current attendance is 72.0%. Minimum college threshold is 75%.', type: 'attendance', timestamp: '1 hour ago', read: false },
+        { id: 'notif-2', title: 'Exam in 4 Days: CS 161', message: 'Algorithms midterm countdown active. Check spaced repetition review.', type: 'exam', timestamp: '3 hours ago', read: false },
+        { id: 'notif-3', title: 'Physics Lab Report Overdue', message: 'Lab 4 was due yesterday at 11:59 AM.', type: 'task', timestamp: 'Yesterday', read: false }
+      ]
+    };
+
+    // Load or initialize state from localStorage
+    function loadState() {
+      const stored = localStorage.getItem('studentos_state');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+      return initialData;
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      localStorage.setItem('studentos_state', JSON.stringify(state));
+      renderNav();
+      renderCurrentTab();
+    }
+
+    let currentTab = 'dashboard';
+    let sidebarCollapsed = false;
+
+    // Navigation items
+    const navItems = [
+      { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+      { id: 'tasks', label: 'Task Manager', icon: 'check-square', getBadge: () => state.tasks.filter(t => t.status !== 'completed' && t.dueDate < '2026-10-15').length ? `${state.tasks.filter(t => t.status !== 'completed' && t.dueDate < '2026-10-15').length} due` : null, badgeColor: 'bg-rose-500' },
+      { id: 'planner', label: 'AI Study Planner', icon: 'calendar-clock', getBadge: () => state.sessions.filter(s => s.isMissed && !s.isCompleted).length ? `${state.sessions.filter(s => s.isMissed && !s.isCompleted).length} missed` : null, badgeColor: 'bg-amber-500' },
+      { id: 'analyzer', label: 'Assignment Analyzer', icon: 'file-search', isAi: true },
+      { id: 'attendance', label: 'Attendance Advisor', icon: 'percent', getBadge: () => state.attendance.some(a => (a.attendedClasses/a.totalClasses)*100 < a.targetPercentage) ? 'Warning' : null, badgeColor: 'bg-rose-500' },
+      { id: 'notes', label: 'AI Notes & Flashcards', icon: 'book-open', isAi: true },
+      { id: 'quizzes', label: 'Quiz Practice', icon: 'help-circle', isAi: true },
+      { id: 'exams', label: 'Exam Countdown', icon: 'graduation-cap' },
+      { id: 'expenses', label: 'Student Budget', icon: 'wallet' },
+      { id: 'automations', label: 'Automation Logs', icon: 'bot' },
+      { id: 'settings', label: 'Settings & Profile', icon: 'settings' }
+    ];
+
+    function renderNav() {
+      const container = document.getElementById('navContainer');
+      container.innerHTML = navItems.map(item => {
+        const isActive = currentTab === item.id;
+        const badge = item.getBadge ? item.getBadge() : null;
+        return `
+          <button onclick="switchTab('${item.id}')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all group relative ${
+            isActive ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md font-semibold' : 'text-slate-400 hover:text-white hover:bg-indigo-900/40'
+          } ${sidebarCollapsed ? 'justify-center px-2' : ''}" title="${item.label}">
+            <i data-lucide="${item.icon}" class="w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-300 group-hover:text-white'}"></i>
+            ${!sidebarCollapsed ? `
+              <span class="truncate flex-1 text-left flex items-center justify-between">
+                <span>${item.label}</span>
+                <span class="flex items-center gap-1.5 ml-2">
+                  ${item.isAi ? '<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">AI</span>' : ''}
+                  ${badge ? `<span class="text-[10px] font-semibold text-white px-2 py-0.5 rounded-full ${item.badgeColor}">${badge}</span>` : ''}
+                </span>
+              </span>
+            ` : (badge ? '<span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-rose-500"></span>' : '')}
+          </button>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.getElementById('mobileBackdrop').classList.add('hidden');
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar').classList.remove('translate-x-0');
+      
+      const titles = {
+        dashboard: 'Good morning, Alex 👋',
+        tasks: 'Task & Deadline Manager',
+        planner: 'AI Study Planner & Timetable',
+        analyzer: 'Assignment Analyzer',
+        attendance: 'Attendance Calculator & Advisor',
+        notes: 'AI Notes & Flashcards',
+        quizzes: 'Practice Quizzes & Diagnostic',
+        exams: 'Exam Preparation & Spaced Revision',
+        expenses: 'Student Budget & Expenses',
+        automations: 'Automated Workflow Engine',
+        settings: 'Settings & Academic Profile'
+      };
+      document.getElementById('pageTitle').innerText = titles[tabId] || 'StudentOS';
+      renderNav();
+      renderCurrentTab();
+    }
+
+    function toggleCollapseSidebar() {
+      sidebarCollapsed = !sidebarCollapsed;
+      const sb = document.getElementById('sidebar');
+      const brand = document.getElementById('brandText');
+      const prof = document.getElementById('sidebarProfileText');
+      const icon = document.getElementById('collapseIcon');
+
+      if (sidebarCollapsed) {
+        sb.classList.remove('w-64');
+        sb.classList.add('w-20');
+        brand.classList.add('hidden');
+        prof.classList.add('hidden');
+        icon.setAttribute('data-lucide', 'chevron-right');
+      } else {
+        sb.classList.remove('w-20');
+        sb.classList.add('w-64');
+        brand.classList.remove('hidden');
+        prof.classList.remove('hidden');
+        icon.setAttribute('data-lucide', 'chevron-left');
+      }
+      renderNav();
+    }
+
+    function toggleMobileSidebar() {
+      const sb = document.getElementById('sidebar');
+      const bd = document.getElementById('mobileBackdrop');
+      const isOpen = !sb.classList.contains('-translate-x-full');
+      if (isOpen) {
+        sb.classList.add('-translate-x-full');
+        bd.classList.add('hidden');
+      } else {
+        sb.classList.remove('-translate-x-full');
+        bd.classList.remove('hidden');
+      }
+    }
+
+    // --- AUTOMATION TOAST ---
+    function triggerToast(title, desc, status = 'success') {
+      const toast = document.getElementById('automationToast');
+      const toastInner = document.getElementById('toastInner');
+      document.getElementById('toastTitle').innerText = title;
+      document.getElementById('toastDesc').innerText = desc;
+      
+      toastInner.className = `p-4 rounded-2xl shadow-2xl border backdrop-blur-md flex items-start gap-3.5 ${
+        status === 'warning' ? 'bg-amber-950/95 border-amber-600/50 text-amber-100' : 'bg-emerald-950/95 border-emerald-600/50 text-emerald-100'
+      }`;
+
+      // Add to state automations
+      state.automations.unshift({
+        id: 'auto-' + Date.now(),
+        timestamp: 'Just now',
+        type: 'schedule_reorganized',
+        title,
+        description: desc,
+        status
+      });
+
+      // Add notification
+      state.notifications.unshift({
+        id: 'notif-' + Date.now(),
+        title,
+        message: desc,
+        type: 'automation',
+        timestamp: 'Just now',
+        read: false
+      });
+
+      toast.classList.remove('hidden');
+      setTimeout(() => hideToast(), 5000);
+      saveState();
+    }
+
+    function hideToast() {
+      document.getElementById('automationToast').classList.add('hidden');
+    }
+
+    // --- RENDER VIEWS ---
+    function renderCurrentTab() {
+      const main = document.getElementById('mainView');
+      if (currentTab === 'dashboard') main.innerHTML = renderDashboard();
+      else if (currentTab === 'tasks') main.innerHTML = renderTasks();
+      else if (currentTab === 'planner') main.innerHTML = renderPlanner();
+      else if (currentTab === 'analyzer') main.innerHTML = renderAnalyzer();
+      else if (currentTab === 'attendance') main.innerHTML = renderAttendance();
+      else if (currentTab === 'notes') main.innerHTML = renderNotes();
+      else if (currentTab === 'quizzes') main.innerHTML = renderQuizzes();
+      else if (currentTab === 'exams') main.innerHTML = renderExams();
+      else if (currentTab === 'expenses') main.innerHTML = renderExpenses();
+      else if (currentTab === 'automations') main.innerHTML = renderAutomations();
+      else if (currentTab === 'settings') main.innerHTML = renderSettings();
+      lucide.createIcons();
+      renderNotificationsList();
+    }
+
+    // 1. DASHBOARD
+    function renderDashboard() {
+      const totalTasks = state.tasks.length;
+      const completedTasks = state.tasks.filter(t => t.status === 'completed').length;
+      const taskPct = totalTasks ? Math.round((completedTasks/totalTasks)*100) : 0;
+      
+      const totalAttended = state.attendance.reduce((acc, a) => acc + a.attendedClasses, 0);
+      const totalClasses = state.attendance.reduce((acc, a) => acc + a.totalClasses, 0);
+      const overallAtt = totalClasses ? ((totalAttended/totalClasses)*100).toFixed(1) : 100;
+
+      const missed = state.sessions.filter(s => s.isMissed && !s.isCompleted);
+      const todaySessions = state.sessions.filter(s => s.date === '2026-10-15');
+
+      return `
+        <div class="space-y-6">
+          ${missed.length ? `
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-500/10 to-transparent border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-xl bg-amber-500/20 text-amber-600">
+                  <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">AI Alert</span>
+                    <span class="text-xs text-slate-500">Missed study session detected</span>
+                  </div>
+                  <p class="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">
+                    1 study block was missed (${missed[0].title}). Reallocate into upcoming open slot?
+                  </p>
+                </div>
+              </div>
+              <button onclick="reorganizeMissedSchedule()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Auto-Reorganize Schedule</span>
+              </button>
+            </div>
+          ` : ''}
+
+          <!-- Metric Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div onclick="switchTab('tasks')" class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md cursor-pointer">
+              <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
+                <span>Task Velocity</span>
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-indigo-600"></i>
+              </div>
+              <div class="mt-3 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-slate-800">${completedTasks}/${totalTasks}</span>
+                <span class="text-xs font-bold text-indigo-600">${taskPct}%</span>
+              </div>
+              <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-indigo-600 h-full rounded-full" style="width: ${taskPct}%"></div>
+              </div>
+              <p class="mt-2 text-[11px] font-semibold text-rose-600">1 overdue assignment pending</p>
+            </div>
+
+            <div onclick="switchTab('planner')" class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md cursor-pointer">
+              <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
+                <span>Today's Focus</span>
+                <i data-lucide="clock" class="w-4 h-4 text-cyan-600"></i>
+              </div>
+              <div class="mt-3 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-slate-800">1.5h</span>
+                <span class="text-xs text-slate-500 font-medium">of 3.5h target</span>
+              </div>
+              <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-cyan-500 h-full rounded-full" style="width: 45%"></div>
+              </div>
+              <p class="mt-2 text-[11px] text-slate-500 font-medium">4-day continuous focus streak!</p>
+            </div>
+
+            <div onclick="switchTab('attendance')" class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md cursor-pointer">
+              <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
+                <span>Attendance Health</span>
+                <i data-lucide="percent" class="w-4 h-4 text-emerald-600"></i>
+              </div>
+              <div class="mt-3 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-slate-800">${overallAtt}%</span>
+                <span class="text-xs font-bold ${overallAtt >= 75 ? 'text-emerald-600' : 'text-rose-600'}">${overallAtt >= 75 ? 'Safe' : 'Warning'}</span>
+              </div>
+              <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: ${overallAtt}%"></div>
+              </div>
+              <p class="mt-2 text-[11px] font-semibold text-rose-600">CS 161 is at 72.0% (Action needed)</p>
+            </div>
+
+            <div onclick="switchTab('exams')" class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md cursor-pointer">
+              <div class="flex justify-between items-center text-xs font-semibold text-slate-500 uppercase">
+                <span>Next Big Exam</span>
+                <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-600"></i>
+              </div>
+              <div class="mt-3">
+                <span class="text-base font-extrabold text-slate-800 block truncate">Algorithms & Data Structures</span>
+                <span class="text-xs text-slate-500">CS 161 • In 4 Days</span>
+              </div>
+              <div class="mt-2 flex items-center justify-between text-xs">
+                <span class="font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">Oct 19</span>
+                <span class="text-slate-500 text-[11px]">2/4 topics reviewed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule & Deadlines Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                <div class="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                      <i data-lucide="clock" class="w-4 h-4 text-indigo-600"></i>
+                      <span>Today's Schedule & Sessions</span>
+                    </h3>
+                    <p class="text-xs text-slate-500">Optimized based on course difficulty and available hours</p>
+                  </div>
+                  <button onclick="switchTab('planner')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">View Timetable →</button>
+                </div>
+                <div class="space-y-3">
+                  ${todaySessions.map(s => `
+                    <div class="p-4 rounded-xl border flex items-center justify-between gap-3 ${s.isCompleted ? 'bg-slate-50 border-slate-200 opacity-70' : 'bg-white border-slate-200 hover:border-indigo-300'}">
+                      <div class="flex items-center gap-3">
+                        <button onclick="toggleSession('${s.id}')" class="w-6 h-6 rounded-lg border flex items-center justify-center ${s.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
+                          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${s.subjectColor}"></span>
+                            <h4 class="text-xs sm:text-sm font-bold ${s.isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}">${s.title}</h4>
+                            <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">${s.subjectName}</span>
+                          </div>
+                          <p class="text-xs text-slate-500 mt-1 pl-4.5">${s.focusTopic}</p>
+                        </div>
+                      </div>
+                      <div class="text-right text-xs">
+                        <span class="font-bold text-slate-700 block">${s.startTime} - ${s.endTime}</span>
+                        <span class="text-[10px] text-slate-400">${s.durationMinutes} mins</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- AI Quick Action Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div onclick="switchTab('analyzer')" class="p-5 rounded-2xl bg-gradient-to-br from-indigo-900 to-indigo-950 text-white shadow-md cursor-pointer hover:shadow-lg transition-all">
+                  <div class="text-cyan-300 text-xs font-semibold flex items-center gap-1.5 mb-1">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>AI Document Parser</span>
+                  </div>
+                  <h4 class="text-base font-bold">Analyze Syllabus & Tasks</h4>
+                  <p class="text-xs text-indigo-200 mt-1">Extract deadlines and homework milestones directly into your task board.</p>
+                </div>
+
+                <div onclick="switchTab('notes')" class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-md cursor-pointer hover:shadow-lg transition-all">
+                  <div class="text-indigo-300 text-xs font-semibold flex items-center gap-1.5 mb-1">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>AI Flashcards & Notes</span>
+                  </div>
+                  <h4 class="text-base font-bold">Generate Study Decks</h4>
+                  <p class="text-xs text-slate-300 mt-1">Convert raw chapter notes into formulas and flippable active recall cards.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deadlines & Automations Column -->
+            <div class="space-y-6">
+              <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-base font-bold text-slate-800">Upcoming Deadlines</h3>
+                  <button onclick="switchTab('tasks')" class="text-xs font-semibold text-indigo-600">All Tasks</button>
+                </div>
+                <div class="space-y-2.5">
+                  ${state.tasks.filter(t => t.status !== 'completed').slice(0, 4).map(t => `
+                    <div class="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-start gap-3">
+                      <button onclick="toggleTaskStatus('${t.id}')" class="mt-0.5 w-4.5 h-4.5 rounded border border-slate-300 text-transparent hover:text-indigo-600 flex items-center justify-center">
+                        <i data-lucide="check" class="w-3 h-3"></i>
+                      </button>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-slate-800 truncate">${t.title}</p>
+                        <div class="flex items-center gap-2 mt-1">
+                          <span class="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style="background-color: ${t.courseColor}">${t.courseName.split(' ')[0]}</span>
+                          <span class="text-[10px] font-bold ${t.dueDate < '2026-10-15' ? 'text-rose-600' : 'text-slate-500'}">
+                            ${t.dueDate < '2026-10-15' ? 'Overdue!' : `Due ${t.dueDate}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Automation Stream -->
+              <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    <h3 class="text-base font-bold text-slate-800">Automations Daemon</h3>
+                  </div>
+                  <button onclick="switchTab('automations')" class="text-xs font-semibold text-indigo-600">Logs</button>
+                </div>
+                <div class="space-y-3">
+                  ${state.automations.slice(0, 3).map(a => `
+                    <div class="p-2.5 rounded-xl bg-slate-50 text-xs">
+                      <p class="font-semibold text-slate-800 text-[11px]">${a.title}</p>
+                      <p class="text-[10px] text-slate-500 mt-0.5 leading-relaxed">${a.description}</p>
+                      <span class="text-[9px] text-slate-400 mt-1 block">${a.timestamp}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. TASKS VIEW
+    let taskViewFilter = 'all';
+    let taskViewMode = 'list';
+
+    function renderTasks() {
+      const filtered = state.tasks.filter(t => {
+        if (taskViewFilter === 'urgent') return t.priority === 'urgent';
+        if (taskViewFilter === 'todo') return t.status === 'todo';
+        if (taskViewFilter === 'completed') return t.status === 'completed';
+        return true;
+      });
+
+      return `
+        <div class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">Task & Deadline Manager</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Prioritized assignments and homework specifications</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
+                <button onclick="taskViewMode='list'; renderCurrentTab();" class="px-2.5 py-1 rounded-lg ${taskViewMode==='list'?'bg-white font-bold text-indigo-600 shadow-xs':'text-slate-500'}">List</button>
+                <button onclick="taskViewMode='kanban'; renderCurrentTab();" class="px-2.5 py-1 rounded-lg ${taskViewMode==='kanban'?'bg-white font-bold text-indigo-600 shadow-xs':'text-slate-500'}">Board</button>
+              </div>
+              <button onclick="openQuickModal('task')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Add Task</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button onclick="taskViewFilter='all'; renderCurrentTab();" class="px-3 py-1.5 rounded-xl text-xs font-medium border ${taskViewFilter==='all'?'bg-indigo-600 text-white border-indigo-600':'bg-white text-slate-600 border-slate-200'}">All Tasks (${state.tasks.length})</button>
+            <button onclick="taskViewFilter='urgent'; renderCurrentTab();" class="px-3 py-1.5 rounded-xl text-xs font-medium border ${taskViewFilter==='urgent'?'bg-rose-600 text-white border-rose-600':'bg-white text-slate-600 border-slate-200'}">Urgent</button>
+            <button onclick="taskViewFilter='todo'; renderCurrentTab();" class="px-3 py-1.5 rounded-xl text-xs font-medium border ${taskViewFilter==='todo'?'bg-indigo-600 text-white border-indigo-600':'bg-white text-slate-600 border-slate-200'}">To Do</button>
+            <button onclick="taskViewFilter='completed'; renderCurrentTab();" class="px-3 py-1.5 rounded-xl text-xs font-medium border ${taskViewFilter==='completed'?'bg-emerald-600 text-white border-emerald-600':'bg-white text-slate-600 border-slate-200'}">Completed</button>
+          </div>
+
+          ${taskViewMode === 'list' ? `
+            <div class="space-y-2.5">
+              ${filtered.map(t => `
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between gap-4 ${t.status === 'completed' ? 'opacity-60 bg-slate-50' : ''}">
+                  <div class="flex items-center gap-3">
+                    <button onclick="toggleTaskStatus('${t.id}')" class="w-5 h-5 rounded-lg border flex items-center justify-center ${t.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent hover:text-indigo-600'}">
+                      <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style="background-color: ${t.courseColor}">${t.courseName}</span>
+                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${t.priority==='urgent'?'bg-rose-100 text-rose-700':'bg-indigo-100 text-indigo-700'}">${t.priority}</span>
+                        ${t.source === 'ai_extracted' ? '<span class="text-[10px] bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded-full">AI Extracted</span>' : ''}
+                      </div>
+                      <h4 class="text-sm font-bold text-slate-800 mt-1 ${t.status === 'completed' ? 'line-through' : ''}">${t.title}</h4>
+                      <p class="text-xs text-slate-500">${t.description || ''}</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs font-bold ${t.dueDate < '2026-10-15' ? 'text-rose-600' : 'text-slate-600'} block">Due: ${t.dueDate}</span>
+                    <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-600 p-1 mt-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              ${['todo', 'in_progress', 'completed'].map(colStatus => `
+                <div class="bg-slate-100/70 p-4 rounded-2xl border border-slate-200">
+                  <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">${colStatus.replace('_', ' ')}</h3>
+                  <div class="space-y-3">
+                    ${state.tasks.filter(t => t.status === colStatus).map(t => `
+                      <div class="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                        <span class="text-[9px] font-bold uppercase text-white px-2 py-0.5 rounded-md" style="background-color: ${t.courseColor}">${t.courseName.split(' ')[0]}</span>
+                        <h4 class="text-xs font-bold text-slate-800 mt-1.5">${t.title}</h4>
+                        <div class="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500">
+                          <span>${t.dueDate}</span>
+                          <button onclick="toggleTaskStatus('${t.id}')" class="p-1 rounded bg-slate-100 hover:bg-emerald-100"><i data-lucide="check" class="w-3 h-3 text-emerald-600"></i></button>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // 3. AI STUDY PLANNER
+    let availableHoursInput = 3.5;
+    function renderPlanner() {
+      const missed = state.sessions.filter(s => s.isMissed && !s.isCompleted);
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">AI Study Planner & Timetable</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Cognitive load distribution and smart timetable generation</p>
+            </div>
+            <button onclick="openQuickModal('session')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Block</span>
+            </button>
+          </div>
+
+          <!-- Configuration Panel -->
+          <div class="p-6 rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-950 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div class="text-cyan-300 text-xs font-semibold flex items-center gap-1.5 mb-1">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Timetable Optimization Engine</span>
+              </div>
+              <h3 class="text-lg font-bold">Daily Study Budget: ${availableHoursInput} Hours</h3>
+              <p class="text-xs text-indigo-200 mt-1 max-w-lg">Schedules deep mathematical proof and code synthesis blocks during peak morning cognitive energy.</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <input type="range" min="1" max="8" step="0.5" value="${availableHoursInput}" oninput="availableHoursInput=this.value; renderCurrentTab();" class="w-36 accent-cyan-400 cursor-pointer">
+              <button onclick="generateAITimetable()" class="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-lg flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Generate Timetable</span>
+              </button>
+            </div>
+          </div>
+
+          ${missed.length ? `
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+                <span class="text-xs text-amber-900 font-semibold">1 Missed Session: "${missed[0].title}". Reallocate into open slot?</span>
+              </div>
+              <button onclick="reorganizeMissedSchedule()" class="px-4 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-bold">Auto-Reorganize</button>
+            </div>
+          ` : ''}
+
+          <!-- Sessions List -->
+          <div class="space-y-3">
+            ${state.sessions.map(s => `
+              <div class="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between ${s.isCompleted ? 'opacity-60 bg-slate-50' : ''}">
+                <div class="flex items-center gap-3">
+                  <button onclick="toggleSession('${s.id}')" class="w-6 h-6 rounded-lg border flex items-center justify-center ${s.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${s.subjectColor}"></span>
+                      <h4 class="text-xs sm:text-sm font-bold text-slate-800">${s.title}</h4>
+                      <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${s.difficulty==='hard'?'bg-rose-100 text-rose-700':'bg-indigo-100 text-indigo-700'}">${s.difficulty}</span>
+                      ${s.aiOptimized ? '<span class="text-[10px] bg-cyan-100 text-cyan-800 font-bold px-2 py-0.5 rounded-md">AI Scheduled</span>' : ''}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">${s.focusTopic}</p>
+                  </div>
+                </div>
+                <div class="text-right text-xs">
+                  <span class="font-bold text-slate-700 block">${s.date} • ${s.startTime} - ${s.endTime}</span>
+                  <span class="text-[10px] text-slate-400">${s.durationMinutes} mins focus</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 4. ASSIGNMENT ANALYZER
+    let analyzerResult = null;
+    function renderAnalyzer() {
+      return `
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">Assignment Analyzer & Extraction</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Parse PDF syllabus or assignment text into scheduled tasks automatically</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 space-y-4">
+              <div class="p-6 rounded-2xl bg-white border-2 border-dashed border-slate-200 text-center">
+                <i data-lucide="upload-cloud" class="w-10 h-10 text-indigo-600 mx-auto mb-2"></i>
+                <h4 class="text-sm font-bold text-slate-800">Upload Homework Brief or Syllabus</h4>
+                <p class="text-xs text-slate-400 mt-1">Accepts PDF, DOCX, TXT files or paste text below</p>
+              </div>
+
+              <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Quick Presets</span>
+                <div class="flex flex-wrap gap-2">
+                  <button onclick="loadSamplePreset('cs161')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-50 text-xs font-medium text-slate-700 border border-slate-200">CS 161: PSet 4 (Graph Flow)</button>
+                  <button onclick="loadSamplePreset('cs229')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-50 text-xs font-medium text-slate-700 border border-slate-200">CS 229: CNN Project</button>
+                  <button onclick="loadSamplePreset('math53')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-indigo-50 text-xs font-medium text-slate-700 border border-slate-200">MATH 53: Stokes Homework</button>
+                </div>
+              </div>
+
+              <textarea id="analyzerInput" rows="7" placeholder="Paste homework assignment prompt or course syllabus text here..." class="w-full text-xs font-mono bg-white border border-slate-200 rounded-2xl p-4 focus:ring-2 focus:ring-indigo-500/20"></textarea>
+
+              <button onclick="runAssignmentAnalyzer()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Analyze Document with AI</span>
+              </button>
+            </div>
+
+            <div class="lg:col-span-5">
+              ${analyzerResult ? `
+                <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-md space-y-4">
+                  <div class="flex justify-between items-center border-b pb-3">
+                    <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">${analyzerResult.confidence}% AI Confidence</span>
+                    <span class="text-xs font-bold text-indigo-700">${analyzerResult.course}</span>
+                  </div>
+                  <h3 class="text-base font-bold text-slate-800">${analyzerResult.title}</h3>
+                  <p class="text-xs text-slate-500">${analyzerResult.summary}</p>
+                  <div class="p-3 rounded-xl bg-slate-50 border text-xs flex justify-between font-bold">
+                    <span>Deadline: ${analyzerResult.dueDate}</span>
+                    <span>Work: ${analyzerResult.estimatedHours} Hours</span>
+                  </div>
+                  <div>
+                    <span class="text-xs font-bold text-slate-700 block mb-2">Milestones:</span>
+                    <div class="space-y-2">
+                      ${analyzerResult.milestones.map(m => `
+                        <div class="p-2.5 rounded-xl border bg-indigo-50/50 border-indigo-200 text-xs">
+                          <span class="font-bold text-slate-800 block">${m.title}</span>
+                          <span class="text-[10px] text-slate-500">Due: ${m.dueDate} • ${m.hours}h est</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  <button onclick="confirmAndAddAnalyzerTasks()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    <span>Confirm & Add to Task Manager</span>
+                  </button>
+                </div>
+              ` : `
+                <div class="h-full min-h-[350px] p-8 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center text-center">
+                  <i data-lucide="file-search" class="w-12 h-12 text-slate-300 mb-3"></i>
+                  <h4 class="text-sm font-bold text-slate-800">No Document Analyzed Yet</h4>
+                  <p class="text-xs text-slate-400 mt-1">Select a preset or paste text on the left, then click analyze.</p>
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 5. ATTENDANCE ADVISOR
+    function renderAttendance() {
+      const totalAttended = state.attendance.reduce((acc, a) => acc + a.attendedClasses, 0);
+      const totalClasses = state.attendance.reduce((acc, a) => acc + a.totalClasses, 0);
+      const overallAtt = totalClasses ? ((totalAttended/totalClasses)*100).toFixed(1) : 100;
+      const target = state.profile.defaultAttendanceRequirement || 75;
+
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">Attendance Calculator & Bunk Advisor</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Subject-wise attendance, safe bunk quotas, and exam eligibility tracking</p>
+            </div>
+            <button onclick="openQuickModal('attendance')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Log Class</span>
+            </button>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl ${overallAtt>=target?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700'} flex items-center justify-center text-lg font-black">
+                ${overallAtt}%
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-slate-800">Overall Attendance: ${overallAtt}%</h4>
+                <p class="text-xs text-slate-500">Enrolled in ${state.attendance.length} courses • Policy minimum ${target}%</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-500">Target Threshold:</span>
+              <span class="font-bold text-indigo-700">${target}%</span>
+            </div>
+          </div>
+
+          <!-- Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            ${state.attendance.map(a => {
+              const pct = ((a.attendedClasses/a.totalClasses)*100).toFixed(1);
+              const isSafe = pct >= a.targetPercentage;
+              let advice = '';
+              if (isSafe) {
+                const canBunk = Math.max(0, Math.floor((a.attendedClasses - (a.targetPercentage/100)*a.totalClasses)/(a.targetPercentage/100)));
+                advice = canBunk > 0 ? `Safe zone: You can safely bunk the next <strong>${canBunk} classes</strong>.` : `On the edge: Do not miss the next class.`;
+              } else {
+                const mustAttend = Math.ceil(((a.targetPercentage/100)*a.totalClasses - a.attendedClasses)/(1 - (a.targetPercentage/100)));
+                advice = `Must attend next <strong>${mustAttend} consecutive classes</strong> to reach ${a.targetPercentage}%.`;
+              }
+
+              return `
+                <div class="p-5 rounded-2xl bg-white border ${!isSafe ? 'border-rose-300 bg-rose-50/10' : 'border-slate-200'} shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${a.color}"></span>
+                        <h4 class="text-sm font-bold text-slate-800">${a.subjectName}</h4>
+                      </div>
+                      <span class="text-xs font-semibold text-slate-400">${a.subjectCode}</span>
+                    </div>
+
+                    <div class="mt-4 flex items-baseline justify-between">
+                      <span class="text-3xl font-black ${isSafe ? 'text-emerald-600' : 'text-rose-600'}">${pct}%</span>
+                      <span class="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">${a.attendedClasses}/${a.totalClasses} Classes</span>
+                    </div>
+
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div class="${isSafe ? 'bg-emerald-500' : 'bg-rose-500'} h-full rounded-full" style="width: ${pct}%"></div>
+                    </div>
+
+                    <div class="mt-4 p-3 rounded-xl text-xs ${isSafe ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-100 text-rose-900'}">
+                      ${advice}
+                    </div>
+                  </div>
+
+                  <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button onclick="logAttendanceDelta('${a.id}', 1, 1)" class="flex-1 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs">+ Present</button>
+                    <button onclick="logAttendanceDelta('${a.id}', 0, 1)" class="flex-1 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs">+ Absent</button>
+                    <button onclick="logAttendanceDelta('${a.id}', -1, -1)" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600" title="Undo"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 6. NOTES & FLASHCARDS
+    let selectedNoteId = 'note-1';
+    let flippedCards = {};
+    function renderNotes() {
+      const activeNote = state.notes.find(n => n.id === selectedNoteId) || state.notes[0];
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">AI Notes Generator & Active Recall</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Automated formulas cheat sheets, key takeaways, and flashcards</p>
+            </div>
+            <button onclick="switchTab('quizzes')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="help-circle" class="w-4 h-4"></i>
+              <span>Take Practice Quiz</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-2">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Saved Notes</span>
+              ${state.notes.map(n => `
+                <div onclick="selectedNoteId='${n.id}'; renderCurrentTab();" class="p-4 rounded-2xl border cursor-pointer transition-all ${selectedNoteId===n.id?'bg-indigo-50 border-indigo-400 shadow-xs':'bg-white border-slate-200 hover:border-slate-300'}">
+                  <span class="text-[10px] font-bold text-white px-2 py-0.5 rounded-full" style="background-color: ${n.subjectColor}">${n.subjectName}</span>
+                  <h4 class="text-xs font-bold text-slate-800 mt-2">${n.title}</h4>
+                  <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.summary}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="lg:col-span-8">
+              ${activeNote ? `
+                <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-md space-y-6">
+                  <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                      <span class="text-[10px] font-bold text-white px-2.5 py-0.5 rounded-full" style="background-color: ${activeNote.subjectColor}">${activeNote.subjectName}</span>
+                      <h3 class="text-lg font-bold text-slate-800 mt-1">${activeNote.title}</h3>
+                    </div>
+                  </div>
+
+                  <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+                    <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-1">Executive Summary</span>
+                    <p class="text-xs text-slate-700 leading-relaxed">${activeNote.summary}</p>
+                  </div>
+
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Key Takeaways</h4>
+                    <div class="space-y-1.5">
+                      ${activeNote.keyTakeaways.map(t => `
+                        <div class="flex items-start gap-2.5 text-xs text-slate-700 p-2 rounded-xl bg-slate-50">
+                          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0"></span>
+                          <span>${t}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  ${activeNote.formulas && activeNote.formulas.length ? `
+                    <div>
+                      <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Formulas Sheet</h4>
+                      <div class="space-y-2">
+                        ${activeNote.formulas.map(f => `
+                          <div class="p-3 rounded-xl bg-slate-900 text-indigo-200 font-mono text-xs flex justify-between items-center">
+                            <span>${f}</span>
+                            <button onclick="navigator.clipboard.writeText('${f}'); triggerToast('Formula Copied', 'Formula copied to clipboard!');" class="text-slate-400 hover:text-white"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">Active Recall Flashcards (Click to Flip)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      ${activeNote.flashcards.map(fc => {
+                        const isFlipped = flippedCards[fc.id];
+                        return `
+                          <div onclick="flippedCards['${fc.id}'] = !flippedCards['${fc.id}']; renderCurrentTab();" class="p-4 rounded-2xl border cursor-pointer min-h-[120px] flex flex-col justify-between ${isFlipped ? 'bg-indigo-900 text-white border-indigo-700' : 'bg-white border-slate-200 hover:border-indigo-300'}">
+                            <span class="text-[10px] font-bold uppercase ${isFlipped?'text-cyan-300':'text-indigo-600'}">${isFlipped?'Answer':'Question'}</span>
+                            <p class="text-xs font-semibold leading-relaxed mt-1">${isFlipped ? fc.answer : fc.question}</p>
+                            <span class="text-[9px] opacity-40 text-right">Tap to flip</span>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 7. PRACTICE QUIZZES
+    let quizAnswers = {};
+    let quizSubmitted = false;
+    let quizScore = 0;
+    function renderQuizzes() {
+      const quiz = state.quizzes[0];
+      return `
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">Practice Quiz & Diagnostic Engine</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Exam simulation, instant scoring, and automated weak topic revision</p>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-md space-y-6">
+            <div class="flex justify-between items-center border-b pb-4">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">${quiz.subjectName}</span>
+                <h3 class="text-base font-bold text-slate-800 mt-1">${quiz.title}</h3>
+              </div>
+              ${quizSubmitted ? `
+                <div class="text-right">
+                  <span class="text-xs text-slate-500 block">Score</span>
+                  <span class="text-2xl font-black ${quizScore>=75?'text-emerald-600':'text-rose-600'}">${quizScore}%</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="space-y-6">
+              ${quiz.questions.map((q, idx) => {
+                const selected = quizAnswers[idx];
+                return `
+                  <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-800">${idx+1}. ${q.question}</h4>
+                    <div class="space-y-2">
+                      ${q.options.map((opt, optIdx) => {
+                        let style = 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-800';
+                        if (quizSubmitted) {
+                          if (optIdx === q.correctAnswer) style = 'bg-emerald-50 border-emerald-500 text-emerald-900 font-bold';
+                          else if (selected === optIdx) style = 'bg-rose-50 border-rose-500 text-rose-900 line-through';
+                        } else if (selected === optIdx) {
+                          style = 'bg-indigo-50 border-indigo-600 text-indigo-900 font-bold';
+                        }
+
+                        return `
+                          <div onclick="if(!quizSubmitted){quizAnswers[${idx}]=${optIdx}; renderCurrentTab();}" class="p-3 rounded-xl border text-xs cursor-pointer ${style}">
+                            ${opt}
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                    ${quizSubmitted ? `
+                      <p class="text-xs text-slate-500 mt-1 bg-slate-50 p-2.5 rounded-xl border"><strong>Explanation:</strong> ${q.explanation}</p>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            ${!quizSubmitted ? `
+              <div class="pt-4 border-t flex justify-end">
+                <button onclick="submitQuiz()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md">Submit Diagnostic</button>
+              </div>
+            ` : `
+              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-xs text-amber-900 block">AI Revision Recommendation</span>
+                  <p class="text-xs text-amber-800">Recommend scheduling a 75-minute revision block on Activation Functions & Gradients before Oct 19.</p>
+                </div>
+                <button onclick="addRevisionToPlanner()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-md">Add to Timetable</button>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function submitQuiz() {
+      const quiz = state.quizzes[0];
+      let correct = 0;
+      quiz.questions.forEach((q, idx) => {
+        if (quizAnswers[idx] === q.correctAnswer) correct++;
+      });
+      quizScore = Math.round((correct / quiz.questions.length) * 100);
+      quizSubmitted = true;
+      if (quizScore >= 75) {
+        confetti({ particleCount: 50, spread: 80, origin: { y: 0.6 } });
+      }
+      triggerToast('Quiz Diagnostic Completed', `Scored ${quizScore}% on ${quiz.title}.`, quizScore >= 75 ? 'success' : 'warning');
+      renderCurrentTab();
+    }
+
+    function addRevisionToPlanner() {
+      state.sessions.unshift({
+        id: 'session-' + Date.now(),
+        title: 'Targeted Revision: Activation Functions',
+        subjectName: 'Machine Learning',
+        subjectColor: '#6366f1',
+        date: '2026-10-16',
+        startTime: '17:00',
+        endTime: '18:15',
+        durationMinutes: 75,
+        isCompleted: false,
+        difficulty: 'hard',
+        focusTopic: 'Vanishing gradients and non-linearities',
+        aiOptimized: true
+      });
+      triggerToast('Revision Session Added', 'Added 75-minute targeted revision block to tomorrow afternoon.');
+      saveState();
+      switchTab('planner');
+    }
+
+    // 8. EXAM PREP
+    function renderExams() {
+      const exam = state.exams[0];
+      const completedTopics = exam.syllabusTopics.filter(t => t.completed).length;
+      const topicPct = Math.round((completedTopics / exam.syllabusTopics.length) * 100);
+
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">Exam Preparation & Spaced Revision</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Spaced repetition schedule: 14d, 7d, 3d, 1d before exam</p>
+            </div>
+            <button onclick="triggerToast('Exam Registered', 'New exam countdown active.');" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Exam</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-7 space-y-6">
+              <div class="p-6 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 text-white shadow-xl">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20">${exam.subjectCode} • Target ${exam.targetScore}%</span>
+                <h3 class="text-xl font-bold mt-2">${exam.subjectName}</h3>
+                <p class="text-xs text-indigo-200 mt-1">${exam.date} at ${exam.time} • ${exam.venue}</p>
+
+                <div class="mt-6 pt-4 border-t border-indigo-800 flex justify-between items-center">
+                  <div>
+                    <span class="text-[10px] text-indigo-300 block uppercase">Countdown</span>
+                    <span class="text-3xl font-black text-cyan-300">4 Days Remaining</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-indigo-300 block uppercase">Syllabus Covered</span>
+                    <span class="text-2xl font-black text-white">${topicPct}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Revision Schedule -->
+              <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
+                <h4 class="text-sm font-bold text-slate-800">Spaced Repetition Milestones</h4>
+                <div class="space-y-2">
+                  ${exam.revisionSchedule.map(m => `
+                    <div class="p-3.5 rounded-xl border flex justify-between items-center ${m.completed?'bg-slate-50 opacity-60':'bg-white hover:border-indigo-300'}">
+                      <div class="flex items-center gap-3">
+                        <button onclick="m.completed=!m.completed; saveState();" class="w-5 h-5 rounded-md border flex items-center justify-center ${m.completed?'bg-emerald-500 text-white border-emerald-500':'border-slate-300'}">
+                          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <div>
+                          <span class="text-xs font-bold text-slate-800 block">${m.label}</span>
+                          <span class="text-[10px] text-slate-400">${m.dayOffset} days before exam (${m.date})</span>
+                        </div>
+                      </div>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${m.completed?'bg-emerald-100 text-emerald-800':'bg-indigo-100 text-indigo-700'}">${m.completed?'Done':'Scheduled'}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Syllabus Topics -->
+            <div class="lg:col-span-5">
+              <div class="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4">
+                <h4 class="text-sm font-bold text-slate-800">Syllabus Topic Checklist (${completedTopics}/${exam.syllabusTopics.length})</h4>
+                <div class="space-y-2">
+                  ${exam.syllabusTopics.map(t => `
+                    <div onclick="t.completed=!t.completed; saveState();" class="p-3 rounded-xl border text-xs cursor-pointer flex items-center gap-2.5 ${t.completed?'bg-slate-50 line-through text-slate-400':'bg-white text-slate-700 font-semibold'}">
+                      <div class="w-4 h-4 rounded border flex items-center justify-center ${t.completed?'bg-emerald-500 text-white border-emerald-500':'border-slate-300'}">
+                        ${t.completed ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
+                      </div>
+                      <span>${t.topic}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 9. EXPENSES
+    function renderExpenses() {
+      const budget = state.profile.monthlyBudget || 1400;
+      const totalSpent = state.expenses.reduce((acc, e) => acc + e.amount, 0);
+      const remaining = budget - totalSpent;
+      const spentPct = Math.round((totalSpent / budget) * 100);
+
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">Student Expense & Budget Tracker</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Dining hall balances, textbooks, and monthly allowances</p>
+            </div>
+            <button onclick="logQuickExpense()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Add Expense</span>
+            </button>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <span class="text-xs font-semibold text-slate-500 uppercase">Monthly Budget</span>
+              <div class="text-3xl font-black text-slate-800 mt-2">$${budget}</div>
+            </div>
+            <div>
+              <span class="text-xs font-semibold text-slate-500 uppercase">Total Spent</span>
+              <div class="text-3xl font-black text-indigo-600 mt-2">$${totalSpent.toFixed(2)} (${spentPct}%)</div>
+              <div class="mt-2 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-indigo-600 h-full rounded-full" style="width: ${spentPct}%"></div>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs font-semibold text-slate-500 uppercase">Remaining Balance</span>
+              <div class="text-3xl font-black text-emerald-600 mt-2">$${remaining.toFixed(2)}</div>
+              <p class="text-xs text-slate-400 mt-1">~$${Math.round(remaining/20)}/day safe daily burn</p>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 space-y-3">
+            <h3 class="text-sm font-bold text-slate-800">Expense History</h3>
+            <div class="space-y-2">
+              ${state.expenses.map(e => `
+                <div class="p-3.5 rounded-xl border border-slate-100 bg-slate-50 flex justify-between items-center">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-800">${e.title}</h4>
+                    <span class="text-[10px] text-slate-400 capitalize">${e.category} • ${e.date}</span>
+                  </div>
+                  <span class="text-sm font-black text-slate-800">-$${e.amount.toFixed(2)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function logQuickExpense() {
+      const item = prompt('Enter item name:', 'Coffee & Study Snack');
+      if (!item) return;
+      const amt = parseFloat(prompt('Enter amount ($):', '6.50'));
+      if (isNaN(amt)) return;
+      state.expenses.unshift({
+        id: 'exp-' + Date.now(),
+        title: item,
+        amount: amt,
+        category: 'food',
+        date: '2026-10-15',
+        note: 'Quick logged'
+      });
+      triggerToast('Expense Saved', `Recorded $${amt.toFixed(2)} for ${item}.`);
+      saveState();
+    }
+
+    // 10. AUTOMATION LOGS
+    function renderAutomations() {
+      return `
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800">Automated Workflow Engine</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Background daemon audit log and rules monitoring</p>
+            </div>
+            <button onclick="runSystemSweep()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              <span>Run System Sweep</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-2xl bg-white border border-slate-200">
+              <h4 class="text-xs font-bold text-slate-800">Missed Session Reorganizer</h4>
+              <p class="text-[11px] text-slate-500 mt-1">Reallocates missed study blocks into upcoming open slots automatically.</p>
+              <span class="inline-block mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Continuous Daemon</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-white border border-slate-200">
+              <h4 class="text-xs font-bold text-slate-800">Attendance Risk Monitor</h4>
+              <p class="text-[11px] text-slate-500 mt-1">Monitors courses falling below college requirement (75%) and emits advice.</p>
+              <span class="inline-block mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Active On Log</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-white border border-slate-200">
+              <h4 class="text-xs font-bold text-slate-800">Spaced Revision Engine</h4>
+              <p class="text-[11px] text-slate-500 mt-1">Calculates 14d, 7d, 3d, 1d milestones leading to exam day.</p>
+              <span class="inline-block mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Active On Exam</span>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 space-y-3">
+            <h3 class="text-sm font-bold text-slate-800">Event Stream (${state.automations.length})</h3>
+            <div class="space-y-3">
+              ${state.automations.map(a => `
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                  <div class="p-2 rounded-xl ${a.status==='warning'?'bg-amber-100 text-amber-700':'bg-emerald-100 text-emerald-700'}">
+                    <i data-lucide="${a.status==='warning'?'alert-triangle':'bot'}" class="w-4 h-4"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                      <span class="text-xs font-bold text-slate-800">${a.title}</span>
+                      <span class="text-[10px] text-slate-400">${a.timestamp}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">${a.description}</p>
+                    <span class="inline-block mt-2 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${a.status==='warning'?'bg-amber-100 text-amber-800':'bg-emerald-100 text-emerald-800'}">${a.status}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function runSystemSweep() {
+      const overdue = state.tasks.filter(t => t.status !== 'completed' && t.dueDate < '2026-10-15');
+      triggerToast('System Automation Sweep Complete', `Scanned system: ${overdue.length} overdue task(s) and 1 low attendance warning indexed.`, overdue.length ? 'warning' : 'success');
+    }
+
+    // 11. SETTINGS
+    function renderSettings() {
+      return `
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">Settings & Academic Configuration</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Manage your student profile, enrolled courses, and AI keys</p>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 space-y-4">
+            <h3 class="text-sm font-bold text-slate-800">Student Profile</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Full Name</label>
+                <input type="text" value="${state.profile.name}" onchange="state.profile.name=this.value; saveState();" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Email</label>
+                <input type="email" value="${state.profile.email}" onchange="state.profile.email=this.value; saveState();" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">University</label>
+                <input type="text" value="${state.profile.university}" onchange="state.profile.university=this.value; saveState();" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Monthly Budget ($)</label>
+                <input type="number" value="${state.profile.monthlyBudget}" onchange="state.profile.monthlyBudget=Number(this.value); saveState();" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-3xl bg-white border border-slate-200 space-y-3">
+            <h3 class="text-sm font-bold text-slate-800">AI Engine Configuration</h3>
+            <p class="text-xs text-slate-500">StudentOS runs a built-in smart heuristic engine that functions 100% offline without API keys, or you can switch to Google Gemini API.</p>
+            <div class="text-xs">
+              <select onchange="state.profile.aiProvider=this.value; saveState();" class="bg-slate-50 border rounded-xl px-3 py-2">
+                <option value="smart_builtin" ${state.profile.aiProvider==='smart_builtin'?'selected':''}>Smart Built-in Heuristic AI (Recommended, 100% Offline)</option>
+                <option value="gemini" ${state.profile.aiProvider==='gemini'?'selected':''}>Google Gemini 2.5 Flash</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-2 flex justify-between items-center">
+            <button onclick="resetData()" class="text-xs font-bold text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-xl">Reset to Demo Defaults</button>
+            <button onclick="triggerToast('Settings Saved', 'Academic profile successfully updated.');" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md">Save Settings</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function resetData() {
+      if (confirm('Reset StudentOS state back to demo defaults?')) {
+        localStorage.removeItem('studentos_state');
+        state = loadState();
+        saveState();
+        triggerToast('Data Reset', 'All records restored to fresh demo state.');
+      }
+    }
+
+    // --- ACTIONS & AUTOMATIONS ---
+    function toggleTaskStatus(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (task) {
+        task.status = task.status === 'completed' ? 'todo' : 'completed';
+        if (task.status === 'completed') {
+          confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+          triggerToast('Task Completed', `"${task.title}" was completed!`);
+        }
+        saveState();
+      }
+    }
+
+    function deleteTask(id) {
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      saveState();
+    }
+
+    function toggleSession(id) {
+      const session = state.sessions.find(s => s.id === id);
+      if (session) {
+        session.isCompleted = !session.isCompleted;
+        if (session.isCompleted) {
+          triggerToast('Study Block Completed', `Logged ${session.durationMinutes} mins on ${session.subjectName}.`);
+        }
+        saveState();
+      }
+    }
+
+    function reorganizeMissedSchedule() {
+      const missed = state.sessions.filter(s => s.isMissed && !s.isCompleted);
+      if (missed.length) {
+        missed.forEach(m => {
+          m.isMissed = false;
+          m.date = '2026-10-16';
+          m.startTime = '10:30';
+          m.endTime = '12:00';
+          m.aiOptimized = true;
+        });
+        triggerToast('Schedule Auto-Reorganized', 'Moved missed Physics block into tomorrow 10:30 AM open slot.');
+        saveState();
+        if (currentTab === 'planner' || currentTab === 'dashboard') renderCurrentTab();
+      }
+    }
+
+    function generateAITimetable() {
+      state.sessions.unshift({
+        id: 'session-ai-' + Date.now(),
+        title: 'Deep Focus: Graph Traversals & Trees',
+        subjectName: 'Algorithms & Data Structures',
+        subjectColor: '#06b6d4',
+        date: '2026-10-15',
+        startTime: '16:00',
+        endTime: '17:30',
+        durationMinutes: 90,
+        isCompleted: false,
+        difficulty: 'hard',
+        focusTopic: 'DFS, BFS, and topological sorting',
+        aiOptimized: true
+      });
+      triggerToast('AI Timetable Generated', `Generated optimal study blocks for ${availableHoursInput} available hours.`);
+      saveState();
+      renderCurrentTab();
+    }
+
+    function loadSamplePreset(preset) {
+      const textMap = {
+        cs161: `Stanford CS 161 Problem Set 4: Graph Traversals & Network Flow\nDue Date: 2026-10-19\n1. Written Ford-Fulkerson proofs.\n2. C++ Edmonds-Karp implementation.\n3. Large graph benchmark suite.`,
+        cs229: `CS 229 Final Project Milestone: Deep Learning\nDue Date: 2026-10-20\n1. Preprocess CIFAR-10 data.\n2. Train ResNet baseline.\n3. Prepare 3-page IEEE progress report.`,
+        math53: `Multivariable Calculus Homework Assignment 7\nDue Date: 2026-10-18\n1. Stokes Theorem Exercises 16.8\n2. Surface Integrals 16.7\n3. Parametric curve representations.`
+      };
+      document.getElementById('analyzerInput').value = textMap[preset] || '';
+    }
+
+    function runAssignmentAnalyzer() {
+      const text = document.getElementById('analyzerInput').value;
+      analyzerResult = {
+        title: text.includes('CS 229') ? 'Deep Learning Final Project' : 'Problem Set 4: Graph Flow & Traversals',
+        course: text.includes('CS 229') ? 'Machine Learning' : 'Algorithms & Data Structures',
+        dueDate: text.includes('CS 229') ? '2026-10-20' : '2026-10-19',
+        estimatedHours: 8,
+        confidence: 96,
+        summary: 'Extracted homework specification with theoretical derivations and modular implementation milestones.',
+        milestones: [
+          { id: 'm1', title: 'Part 1: Theoretical proofs and algorithm design', dueDate: '2026-10-16', hours: 2 },
+          { id: 'm2', title: 'Part 2: Core implementation & test harness', dueDate: '2026-10-17', hours: 4 },
+          { id: 'm3', title: 'Part 3: Benchmark validation and final writeup', dueDate: '2026-10-19', hours: 2 }
+        ]
+      };
+      triggerToast('Document Analyzed with AI', `Extracted 3 milestones with 96% confidence.`);
+      renderCurrentTab();
+    }
+
+    function confirmAndAddAnalyzerTasks() {
+      if (!analyzerResult) return;
+      analyzerResult.milestones.forEach((m, i) => {
+        state.tasks.unshift({
+          id: 'task-ai-' + Date.now() + '-' + i,
+          title: m.title,
+          description: `Extracted from ${analyzerResult.title}`,
+          courseName: analyzerResult.course,
+          courseColor: analyzerResult.course === 'Machine Learning' ? '#6366f1' : '#06b6d4',
+          priority: 'high',
+          dueDate: m.dueDate,
+          status: 'todo',
+          estimatedMinutes: m.hours * 60,
+          source: 'ai_extracted'
+        });
+      });
+      confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+      triggerToast('Tasks Added to Manager', `Added ${analyzerResult.milestones.length} milestones directly to Task Manager.`);
+      analyzerResult = null;
+      saveState();
+      switchTab('tasks');
+    }
+
+    function logAttendanceDelta(id, attDelta, totDelta) {
+      const sub = state.attendance.find(a => a.id === id);
+      if (sub) {
+        sub.attendedClasses = Math.max(0, sub.attendedClasses + attDelta);
+        sub.totalClasses = Math.max(1, sub.totalClasses + totDelta);
+        const pct = ((sub.attendedClasses/sub.totalClasses)*100).toFixed(1);
+        triggerToast('Attendance Logged', `${sub.subjectCode} attendance updated to ${pct}%.`, pct < sub.targetPercentage ? 'warning' : 'success');
+        saveState();
+      }
+    }
+
+    // --- QUICK MODAL DISPATCHER ---
+    function openQuickModal(type) {
+      document.getElementById('quickMenu').classList.add('hidden');
+      const modal = document.getElementById('quickModal');
+      const content = document.getElementById('quickModalContent');
+
+      if (type === 'task') {
+        content.innerHTML = `
+          <h3 class="text-base font-bold text-slate-800">Quick Add Task</h3>
+          <div class="mt-4 space-y-3 text-xs">
+            <input type="text" id="qTaskTitle" placeholder="Task title..." class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+            <select id="qTaskCourse" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              ${state.subjects.map(s => `<option value="${s.name}|${s.color}">${s.code}: ${s.name}</option>`).join('')}
+            </select>
+            <input type="date" id="qTaskDate" value="2026-10-17" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+            <button onclick="submitQuickTask()" class="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-bold">Create Task</button>
+          </div>
+        `;
+      } else if (type === 'session') {
+        content.innerHTML = `
+          <h3 class="text-base font-bold text-slate-800">Schedule Study Block</h3>
+          <div class="mt-4 space-y-3 text-xs">
+            <input type="text" id="qSessionTitle" placeholder="Session focus..." class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+            <select id="qSessionCourse" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              ${state.subjects.map(s => `<option value="${s.name}|${s.color}">${s.code}: ${s.name}</option>`).join('')}
+            </select>
+            <input type="time" id="qSessionTime" value="14:00" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+            <button onclick="submitQuickSession()" class="w-full py-2.5 rounded-xl bg-cyan-600 text-white font-bold">Schedule Block</button>
+          </div>
+        `;
+      } else if (type === 'attendance') {
+        content.innerHTML = `
+          <h3 class="text-base font-bold text-slate-800">Log Class Attendance</h3>
+          <div class="mt-4 space-y-3 text-xs">
+            <select id="qAttCourse" class="w-full bg-slate-50 border rounded-xl px-3 py-2">
+              ${state.attendance.map(a => `<option value="${a.id}">${a.subjectCode}: ${a.subjectName}</option>`).join('')}
+            </select>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="submitQuickAttendance(true)" class="py-2.5 rounded-xl bg-emerald-500 text-white font-bold">✓ Present</button>
+              <button onclick="submitQuickAttendance(false)" class="py-2.5 rounded-xl bg-rose-500 text-white font-bold">✗ Absent</button>
+            </div>
+          </div>
+        `;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeQuickModal() {
+      document.getElementById('quickModal').classList.add('hidden');
+    }
+
+    function submitQuickTask() {
+      const title = document.getElementById('qTaskTitle').value;
+      if (!title) return;
+      const [cName, cColor] = document.getElementById('qTaskCourse').value.split('|');
+      const date = document.getElementById('qTaskDate').value;
+      state.tasks.unshift({
+        id: 'task-' + Date.now(),
+        title,
+        courseName: cName,
+        courseColor: cColor,
+        priority: 'high',
+        dueDate: date,
+        status: 'todo',
+        source: 'manual'
+      });
+      triggerToast('Task Created', `"${title}" was added to Task Manager.`);
+      closeQuickModal();
+      saveState();
+    }
+
+    function submitQuickSession() {
+      const title = document.getElementById('qSessionTitle').value;
+      if (!title) return;
+      const [cName, cColor] = document.getElementById('qSessionCourse').value.split('|');
+      const time = document.getElementById('qSessionTime').value;
+      state.sessions.unshift({
+        id: 'session-' + Date.now(),
+        title,
+        subjectName: cName,
+        subjectColor: cColor,
+        date: '2026-10-15',
+        startTime: time,
+        endTime: '15:15',
+        durationMinutes: 75,
+        isCompleted: false,
+        difficulty: 'medium',
+        focusTopic: 'Problem sets'
+      });
+      triggerToast('Session Scheduled', `Scheduled study block for ${cName}.`);
+      closeQuickModal();
+      saveState();
+    }
+
+    function submitQuickAttendance(present) {
+      const attId = document.getElementById('qAttCourse').value;
+      logAttendanceDelta(attId, present ? 1 : 0, 1);
+      closeQuickModal();
+    }
+
+    function toggleQuickMenu() {
+      document.getElementById('quickMenu').classList.toggle('hidden');
+    }
+
+    function toggleNotifMenu() {
+      document.getElementById('notifMenu').classList.toggle('hidden');
+    }
+
+    function renderNotificationsList() {
+      const list = document.getElementById('notifList');
+      const badge = document.getElementById('notifBadge');
+      const unread = state.notifications.filter(n => !n.read).length;
+      badge.innerText = unread;
+      badge.style.display = unread ? 'flex' : 'none';
+
+      list.innerHTML = state.notifications.map(n => `
+        <div class="p-3 text-xs bg-slate-50 hover:bg-slate-100 flex gap-2.5">
+          <div class="flex-1">
+            <div class="flex justify-between font-bold text-slate-800">
+              <span>${n.title}</span>
+              <span class="text-[10px] text-slate-400 font-normal">${n.timestamp}</span>
+            </div>
+            <p class="text-slate-600 mt-0.5 leading-snug">${n.message}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function clearNotifications() {
+      state.notifications = [];
+      saveState();
+      toggleNotifMenu();
+    }
+
+    function handleSearch(query) {
+      if (!query.trim()) return;
+      if (currentTab !== 'tasks') switchTab('tasks');
+    }
+
+    // Initialize application
+    window.onload = function() {
+      renderNav();
+      renderCurrentTab();
+    };
+  </script>
+</body>
+</html>
